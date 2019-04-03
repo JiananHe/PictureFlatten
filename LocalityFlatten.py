@@ -6,6 +6,17 @@ import matplotlib.pyplot as plt
 omit the mask extraction procedure
 '''
 
+def postProcess(img):
+    black_col_left = 0
+    while (img[:, black_col_left, :] == 0).all():
+        black_col_left = black_col_left + 1
+
+    black_col_right = img.shape[1] - 1
+    while (img[:, black_col_right, :] == 0).all():
+        black_col_right = black_col_right - 1
+
+    return img[:, black_col_left:black_col_right, :]
+
 
 def flattenArea(lr, tb, hor_decay_rate, ver_inter_ratio, init_width_ratio, min_width_ratio):
     width = mid_col - leftmost if lr == "left" else rightmost - mid_col
@@ -85,7 +96,7 @@ def flattenArea(lr, tb, hor_decay_rate, ver_inter_ratio, init_width_ratio, min_w
             dst = np.hstack((dst, np.zeros((dst_height, init_interval_length, 3))))
 
         total_interval_width = total_interval_width + interval_width
-        interval_width = int(interval_width * hor_decay_rate * hor_decay_rate + 0.5)
+        interval_width = int(interval_width * hor_decay_rate + 0.5)
         if interval_width < min_interval_length:
             interval_width = min_interval_length
         elif lr == "left" and interval_width > interval_left - leftmost:
@@ -102,14 +113,17 @@ def flattenArea(lr, tb, hor_decay_rate, ver_inter_ratio, init_width_ratio, min_w
 
     cv2.imshow("src", src_temp)
     cv2.imwrite("src.jpg", src_temp)
+
+    # post processing
+    dst = postProcess(dst)
     cv2.imwrite(lr + "_" + tb + "_dst.jpg", dst)
     return dst
 
 
 if __name__ == "__main__":
     # read and resize the mask
-    src = cv2.imread("./picture/4q.jpg")
-    mask = cv2.imread("./picture/4q_1.jpg")
+    src = cv2.imread("./picture/example1/3-3.jpg")
+    mask = cv2.imread("./picture/example1/3-3m.jpg")
     # h, w = mask.shape[:2]
     # mask = cv2.resize(mask, (w // 2, h // 2))
     # src = cv2.resize(src, (w // 2, h // 2))
@@ -156,10 +170,10 @@ if __name__ == "__main__":
     cv2.imshow("border", mask_temp)
     cv2.waitKey(0)
 
-    left_bottom_dst = flattenArea("left", "bottom", 0.9, 0.25, 0.25, 0.25)
-    left_up_dst = flattenArea("left", "up", 0.9, 0.25, 0.25, 0.25)
-    right_bottom_dst = flattenArea("right", "bottom", 0.9, 0.25, 0.25, 0.25)
-    right_up_dst = flattenArea("right", "up", 0.9, 0.25, 0.25, 0.25)
+    left_bottom_dst = flattenArea("left", "bottom", 0.85, 0.2, 0.2, 0.2)
+    left_up_dst = flattenArea("left", "up", 0.85, 0.2, 0.2, 0.2)
+    right_bottom_dst = flattenArea("right", "bottom", 0.85, 0.2, 0.2, 0.2)
+    right_up_dst = flattenArea("right", "up", 0.85, 0.2, 0.2, 0.2)
 
     print(left_bottom_dst.shape)
     print(left_up_dst.shape)
